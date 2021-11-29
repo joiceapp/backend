@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
+from sqlalchemy import Column, DateTime, ForeignKey, String
+from sqlalchemy.orm import Mapped, relationship
 from typing import Any, TYPE_CHECKING
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, ForeignKey, String
-from sqlalchemy.orm import Mapped, relationship
-
+from .. import models
 from ..database import Base, db
 from ..logger import get_logger
 
@@ -34,24 +34,26 @@ class Event(Base):
     participants: list[Participant] = relationship(
             "Participant",
             back_populates="event",
-            cascade="all, delete",
+            cascade="all, delete,delete-orphan",
     )
 
     @staticmethod
     async def create(name: str, description: str, owner_id: str, event_time: datetime, tags: str,
                      position: str, icon_url: str) -> Event:
+        current_time = datetime.utcnow()
         event = Event(
                 id=str(uuid4()),
                 chat_id=str(uuid4()),
                 name=name,
                 description=description,
                 owner=owner_id,
-                event_created=datetime.utcnow(),
+                event_created=current_time,
                 event_time=event_time,
                 tags=tags,
                 position=position,
                 icon_url=icon_url
         )
+
         await db.add(event)
         return event
 
@@ -68,5 +70,11 @@ class Event(Base):
             "tags": self.tags,
             "position": self.position,
             "icon": self.icon_url,
-            "participants":self.participants
+            #"participants": self.participants
         }
+
+    @staticmethod
+    async def get_from_id(id: str) -> dict[str, Any]:
+        event = await db.get(Event, id=id)
+        return event
+

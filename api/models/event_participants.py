@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, TYPE_CHECKING
-
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, relationship
+from typing import Any, TYPE_CHECKING
 
+from .events import Event
 from ..database import Base, db
 from ..logger import get_logger
+from .. import models
 
 if TYPE_CHECKING:
     from . import User
@@ -25,22 +26,22 @@ class Participant(Base):
     user: User = relationship("User", back_populates="participates")
     joined_at: Mapped[datetime] = Column(DateTime, nullable=True)
     requested_at: Mapped[datetime] = Column(DateTime, nullable=False)
-    accepted: Mapped[bool] = Column(Boolean, nullable=True)
-    joined: Mapped[bool] = Column(Boolean, nullable=True)
+    accepted: Mapped[bool] = Column(Boolean, default=0)
 
     @staticmethod
     async def create(event_id: str, user_id: str) -> Event:
-        joined=joined_at=None
-        if await db.get(Event, Column[Any], id=event_id)["owner"] == user_id:
+        joined_at = None
+        accepted=False
+        if (await models.Event.get_from_id(event_id)).owner == user_id:
             joined_at = datetime.utcnow()
-            joined = True
+            accepted=True
 
         event = Participant(
                 event_id=event_id,
                 user_id=user_id,
                 requested_at=datetime.utcnow(),
-                joined_at=joined_at ,
-                joined=joined
+                joined_at=joined_at,
+                accepted=accepted
         )
         await db.add(event)
         return event
@@ -53,6 +54,4 @@ class Participant(Base):
             "joined_at": self.joined_at,
             "requested_at": self.requested_at,
             "accepted": self.accepted,
-            "joined": self.joined,
-
         }

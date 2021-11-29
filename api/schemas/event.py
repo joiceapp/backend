@@ -37,7 +37,7 @@ class Event(BaseModel):
                   joined_at: 1615735459.274742,
                   reqeusted_at: 1615735459.274742,
                   accepted: True,
-                  joined: True}"""
+                  }"""
             ]
 
     )
@@ -64,3 +64,4 @@ class EventResponse(BaseModel):
     icon_url: Optional[str]
     position: str
     participants: list
+
