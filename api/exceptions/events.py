@@ -9,4 +9,7 @@ class EventNotFound(APIException):
     description = "Event with this ID could not be found."
 
 
-
+class AlreadyParticipantException(APIException):
+    status_code = status.HTTP_404_NOT_FOUND
+    detail = "Already Participant"
+    description = "User already participate in this Event."

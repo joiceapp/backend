@@ -6,9 +6,9 @@ from sqlalchemy.orm import Mapped, relationship
 from typing import Any, TYPE_CHECKING
 
 from .events import Event
-from ..database import Base, db
-from ..logger import get_logger
 from .. import models
+from ..database import Base, db, filter_by, select
+from ..logger import get_logger
 
 if TYPE_CHECKING:
     from . import User
@@ -22,7 +22,7 @@ class Participant(Base):
 
     event_id: Mapped[str] = Column(String(36), ForeignKey("events.id"), nullable=False, primary_key=True)
     event: Event = relationship("Event", back_populates="participants")
-    user_id: Mapped[str] = Column(String(36), ForeignKey("user.id"), nullable=False)
+    user_id: Mapped[str] = Column(String(36), ForeignKey("user.id"), nullable=False, primary_key=True)
     user: User = relationship("User", back_populates="participates")
     joined_at: Mapped[datetime] = Column(DateTime, nullable=True)
     requested_at: Mapped[datetime] = Column(DateTime, nullable=False)
@@ -31,10 +31,10 @@ class Participant(Base):
     @staticmethod
     async def create(event_id: str, user_id: str) -> Event:
         joined_at = None
-        accepted=False
+        accepted = False
         if (await models.Event.get_from_id(event_id)).owner == user_id:
             joined_at = datetime.utcnow()
-            accepted=True
+            accepted = True
 
         event = Participant(
                 event_id=event_id,
@@ -55,3 +55,8 @@ class Participant(Base):
             "requested_at": self.requested_at,
             "accepted": self.accepted,
         }
+
+    @staticmethod
+    async def get_participants(event_id: str) -> list:
+        participants = await db.all(select(Participant).where(Participant.event_id == event_id))
+        return [participant.serialize for participant in participants]
