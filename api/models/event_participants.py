@@ -59,4 +59,4 @@ class Participant(Base):
     @staticmethod
     async def get_participants(event_id: str) -> list:
         participants = await db.all(select(Participant).where(Participant.event_id == event_id))
-        return [participant.serialize for participant in participants]
+        return participants

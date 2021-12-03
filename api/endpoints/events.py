@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from typing import Any
+from datetime import datetime
 
 from .. import models
 from ..auth import get_user, user_auth
@@ -10,7 +11,8 @@ from ..exceptions.events import AlreadyParticipantException, EventNotFound
 from ..models.events import Event
 from ..models.session import Session
 from ..models.user import User
-from ..schemas.event import CreateEvent, EventResponse
+from ..exceptions.user import UserNotFoundError
+from ..schemas.event import CreateEvent, EventResponse, EventUserAccept
 from ..schemas.test import TestResponse
 
 router = APIRouter(tags=["events"])
@@ -68,8 +70,39 @@ async def request(event_id: str, user: models.User = get_user(require_self_or_ad
     if event is None:
         return EventNotFound
     participants = await models.Participant.get_participants(event_id)
-    if any(participant["user_id"] == user.id for participant in participants):
+    if any(participant.user_id == user.id for participant in participants):
         return AlreadyParticipantException
 
     await models.Participant.create(event_id, user.id);
     return True
+
+
+@router.post("/accept/",
+             responses=user_responses(
+                     bool,
+                     PermissionDeniedError,
+                     EventNotFound,
+                     UserNotFoundError
+             ))
+async def request(event_user: EventUserAccept, user: models.User = get_user(require_self_or_admin=True)) -> Any:
+    event = await Event.get_from_id(event_user.event_id)
+
+    if event is None:
+        return EventNotFound
+    if event.owner != user.id:
+        return PermissionDeniedError
+    participants = await models.Participant.get_participants(event_user.event_id)
+    for participant in participants:
+        if participant.user_id == event_user.user_id:
+            print(participant.serialize)
+            if not participant.accepted:
+                participant.accepted = True
+                participant.joined_at = datetime.utcnow()
+            else:
+                participant.accepted = True
+                participant.joined_at = None
+
+            return True
+
+    return UserNotFoundError
+

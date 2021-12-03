@@ -65,3 +65,8 @@ class EventResponse(BaseModel):
     position: str
     participants: list
 
+
+class EventUserAccept(BaseModel):
+    event_id: str
+    user_id: str
+    accept: bool
