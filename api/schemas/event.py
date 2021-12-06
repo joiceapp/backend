@@ -18,7 +18,8 @@ class Event(BaseModel):
     event_time: float
     tags: Optional[str]
     icon_url: Optional[str]
-    position: str
+    lan: float
+    long: float
     participants: list
 
     Config = example(
@@ -31,7 +32,8 @@ class Event(BaseModel):
             event_time=1615735459.274742,
             tags="tag1 tag2 vegan vegetarian",
             icon_url="http://127.0.0.1/img.png",
-            position="51.503280237787784, -0.11956081297998757",
+            lan=51.503280237787784,
+            long=51.503280237787789,
             participants=[
                 """ {user_id: "8826d3c7-5456-43c2-a132-b94a9d3e4121",
                   joined_at: 1615735459.274742,
@@ -49,7 +51,8 @@ class CreateEvent(BaseModel):
     event_time: float
     tags: Optional[str]
     icon_url: Optional[str]
-    position: str
+    lan: float
+    long: float
 
 
 class EventResponse(BaseModel):
@@ -62,7 +65,8 @@ class EventResponse(BaseModel):
     event_time: float
     tags: Optional[str]
     icon_url: Optional[str]
-    position: str
+    lan: str
+    long: str
     participants: list
 
 
@@ -70,3 +74,12 @@ class EventUserAccept(BaseModel):
     event_id: str
     user_id: str
     accept: bool
+
+
+class FilterEvent(BaseModel):
+    name: Optional[str]
+    tags: Optional[str]
+    tags: Optional[str]
+    lan:float
+    long:float
+    distance: int

@@ -1,6 +1,7 @@
-from fastapi import APIRouter
-from typing import Any
 from datetime import datetime
+from fastapi import APIRouter
+from math import pow, sqrt
+from typing import Any
 
 from .. import models
 from ..auth import get_user, user_auth
@@ -8,14 +9,21 @@ from ..database import db, filter_by, select
 from ..exceptions import responses
 from ..exceptions.auth import PermissionDeniedError, user_responses
 from ..exceptions.events import AlreadyParticipantException, EventNotFound
+from ..exceptions.user import UserNotFoundError
 from ..models.events import Event
 from ..models.session import Session
 from ..models.user import User
-from ..exceptions.user import UserNotFoundError
-from ..schemas.event import CreateEvent, EventResponse, EventUserAccept
+from ..schemas.event import CreateEvent, EventResponse, EventUserAccept, FilterEvent
 from ..schemas.test import TestResponse
 
 router = APIRouter(tags=["events"])
+
+"""
+Event Erstellen/ Löschen
+Eventteilnahme anfragen
+Eventteilnehmen auflisten/annehmen/kicken
+Fehlt: events suchens
+"""
 
 
 @router.post(
@@ -31,7 +39,8 @@ async def create_event(event: CreateEvent, user: models.User = get_user(require_
                                       owner_id=user.id,
                                       event_time=event.event_time,
                                       tags=event.tags,
-                                      position=event.position,
+                                      lan=event.lan,
+                                      long=event.long,
                                       icon_url=event.icon_url
                                       )
     await models.Participant.create(event_id=event.id, user_id=user.id)
@@ -58,7 +67,21 @@ async def delete_event(event_id: str, user: models.User = get_user(require_self_
     return True
 
 
-@router.post("/request/{event_id}/",
+@router.post("/filter/",
+             responses=user_responses(
+                     list,
+             ))
+async def filter_events(event_filter: FilterEvent, ):  # user: models.User = get_user(require_self_or_admin=True)):
+    event_ids = await db.all(f"""
+                            SELECT id, lan, `long`, SQRT(POW(69.1 * (events.lan - {event_filter.lan}), 2) +
+                            POW(69.1 * ({event_filter.long} - events.long) * COS(events.lan / 57.3), 2)) AS distance    
+                            FROM events HAVING distance < {event_filter.distance} ORDER BY distance;"""
+                        )
+
+    print(event_ids)
+
+
+@router.post("/request/request/{event_id}/",
              responses=user_responses(
                      bool,
                      PermissionDeniedError,
@@ -77,14 +100,14 @@ async def request(event_id: str, user: models.User = get_user(require_self_or_ad
     return True
 
 
-@router.post("/accept/",
+@router.post("/request/accept/",
              responses=user_responses(
                      bool,
                      PermissionDeniedError,
                      EventNotFound,
                      UserNotFoundError
              ))
-async def request(event_user: EventUserAccept, user: models.User = get_user(require_self_or_admin=True)) -> Any:
+async def accept(event_user: EventUserAccept, user: models.User = get_user(require_self_or_admin=True)) -> Any:
     event = await Event.get_from_id(event_user.event_id)
 
     if event is None:
@@ -106,3 +129,21 @@ async def request(event_user: EventUserAccept, user: models.User = get_user(requ
 
     return UserNotFoundError
 
+
+@router.get("/request/get/{event_id}",
+            responses=user_responses(
+                    list,
+                    PermissionDeniedError,
+                    EventNotFound,
+                    UserNotFoundError
+            ))
+async def get(event_id: str, user: models.User = get_user(require_self_or_admin=True)) -> Any:
+    event = await Event.get_from_id(event_id)
+
+    if event is None:
+        return EventNotFound
+    if event.owner != user.id:
+        return PermissionDeniedError
+    participants = await models.Participant.get_participants(event_id)
+    participants_serialized = [participant.serialize for participant in participants]
+    return participants_serialized

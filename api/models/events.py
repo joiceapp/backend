@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from sqlalchemy import Column, DateTime, ForeignKey, String
+from sqlalchemy import Column, DateTime, Float, ForeignKey, String
 from sqlalchemy.orm import Mapped, relationship
 from typing import Any, TYPE_CHECKING
 from uuid import uuid4
@@ -30,7 +30,8 @@ class Event(Base):
     event_time: Mapped[datetime] = Column(DateTime, nullable=False)
     tags: Mapped[str] = Column(String(256), nullable=True)
     icon_url: Mapped[str] = Column(String(1024), nullable=True)
-    position: Mapped[str] = Column(String(36))
+    lan: Mapped[float] = Column(Float(14))
+    long: Mapped[float] = Column(Float(14))
     participants: list[Participant] = relationship(
             "Participant",
             back_populates="event",
@@ -39,7 +40,7 @@ class Event(Base):
 
     @staticmethod
     async def create(name: str, description: str, owner_id: str, event_time: datetime, tags: str,
-                     position: str, icon_url: str) -> Event:
+                     lan: float, long: float, icon_url: str) -> Event:
         current_time = datetime.utcnow()
         event = Event(
                 id=str(uuid4()),
@@ -50,7 +51,8 @@ class Event(Base):
                 event_created=current_time,
                 event_time=event_time,
                 tags=tags,
-                position=position,
+                lan=lan,
+                long=long,
                 icon_url=icon_url
         )
 
@@ -68,13 +70,13 @@ class Event(Base):
             "event_created": self.event_created,
             "event_time": self.event_time,
             "tags": self.tags,
-            "position": self.position,
+            "lan": self.lan,
+            "long": self.long,
             "icon": self.icon_url,
-            #"participants": self.participants
+            # "participants": self.participants
         }
 
     @staticmethod
     async def get_from_id(id: str) -> dict[str, Any]:
         event = await db.get(Event, id=id)
         return event
-
