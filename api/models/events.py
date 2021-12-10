@@ -80,3 +80,10 @@ class Event(Base):
     async def get_from_id(id: str) -> dict[str, Any]:
         event = await db.get(Event, id=id)
         return event
+
+    @staticmethod
+    async def get_list_ids(ids: list) -> dict[str, Any]:
+        events = []
+        for id in ids:
+            events.append(await db.get(Event, id=id))
+        return events

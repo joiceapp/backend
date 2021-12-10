@@ -1,6 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter
-from math import pow, sqrt
+from math import pow, sqrt,cos
 from typing import Any
 
 from .. import models
@@ -31,6 +31,7 @@ Fehlt: events suchens
 
         responses=user_responses(
                 EventResponse,
+
         ),
 )
 async def create_event(event: CreateEvent, user: models.User = get_user(require_self_or_admin=True)) -> Any:
@@ -61,7 +62,8 @@ async def delete_event(event_id: str, user: models.User = get_user(require_self_
     event = await Event.get_from_id(event_id)
     if event is None:
         return EventNotFound
-
+    if event.owner != user.id:
+        return PermissionDeniedError
     await db.delete(event)
 
     return True
@@ -73,13 +75,26 @@ async def delete_event(event_id: str, user: models.User = get_user(require_self_
              ))
 async def filter_events(event_filter: FilterEvent, ):  # user: models.User = get_user(require_self_or_admin=True)):
     event_ids = await db.all(f"""
-                            SELECT id, lan, `long`, SQRT(POW(69.1 * (events.lan - {event_filter.lan}), 2) +
+                            SELECT * ,  SQRT(POW(69.1 * (events.lan - {event_filter.lan}), 2) +
                             POW(69.1 * ({event_filter.long} - events.long) * COS(events.lan / 57.3), 2)) AS distance    
-                            FROM events HAVING distance < {event_filter.distance} ORDER BY distance;"""
-                        )
+                            FROM events HAVING distance < {event_filter.distance} ORDER BY distance LIMIT 50; """
+                             )
+    events = await Event.get_list_ids(event_ids)
+    events_serialized = []
+    for event in events:
+        event_serialized = event.serialize
+        print(event_serialized["lan"])
+        event_serialized["destination"] = sqrt(
+                pow(69.1 * (float(event_serialized["lan"]) - event_filter.lan), 2) +
+                pow(69.1 * (event_filter.long - float(event_serialized["long"])) * cos(
+                        float(event_serialized["lan"]) / 57.3), 2))
+        event_serialized["lan"]=0
+        event_serialized["long"]=0
+        events_serialized.append(event_serialized)
 
-    print(event_ids)
 
+    print(events_serialized)
+    return events_serialized
 
 @router.post("/request/request/{event_id}/",
              responses=user_responses(
@@ -122,8 +137,7 @@ async def accept(event_user: EventUserAccept, user: models.User = get_user(requi
                 participant.accepted = True
                 participant.joined_at = datetime.utcnow()
             else:
-                participant.accepted = True
-                participant.joined_at = None
+                participant.remove()
 
             return True
 

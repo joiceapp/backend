@@ -1,17 +1,16 @@
 import asyncio
-from typing import Callable, Awaitable, TypeVar
-
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from typing import Awaitable, Callable, TypeVar
 
 from .database import db, db_context
-from .endpoints import test, user, session, oauth,events
-from .environment import ROOT_PATH, DEBUG
+from .endpoints import chat, events, oauth, session, test, user
+from .environment import DEBUG, ROOT_PATH
 from .logger import get_logger
-from .models import User, Session
+from .models import Session, User
 from .version import get_version
 
 T = TypeVar("T")
@@ -22,11 +21,11 @@ app = FastAPI(title="FastAPI", root_path=ROOT_PATH)
 
 if DEBUG:
     app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
     )
 
 
@@ -76,3 +75,4 @@ app.include_router(session.router)
 app.include_router(oauth.router)
 app.include_router(test.router)
 app.include_router(events.router)
+app.include_router(events.chat)

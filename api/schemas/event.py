@@ -80,6 +80,6 @@ class FilterEvent(BaseModel):
     name: Optional[str]
     tags: Optional[str]
     tags: Optional[str]
-    lan:float
-    long:float
+    lan: float
+    long: float
     distance: int
