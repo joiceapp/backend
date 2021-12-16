@@ -42,7 +42,8 @@ async def create_event(event: CreateEvent, user: models.User = get_user(require_
                                       tags=event.tags,
                                       lan=event.lan,
                                       long=event.long,
-                                      icon_url=event.icon_url
+                                      icon_url=event.icon_url,
+                                      max_participants=event.max_participants
                                       )
     await models.Participant.create(event_id=event.id, user_id=user.id)
 

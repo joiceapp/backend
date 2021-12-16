@@ -20,6 +20,7 @@ class Event(BaseModel):
     icon_url: Optional[str]
     lan: float
     long: float
+    max_participants:int
     participants: list
 
     Config = example(
@@ -34,6 +35,7 @@ class Event(BaseModel):
             icon_url="http://127.0.0.1/img.png",
             lan=51.503280237787784,
             long=51.503280237787789,
+            max_participants=3,
             participants=[
                 """ {user_id: "8826d3c7-5456-43c2-a132-b94a9d3e4121",
                   joined_at: 1615735459.274742,
@@ -53,6 +55,7 @@ class CreateEvent(BaseModel):
     icon_url: Optional[str]
     lan: float
     long: float
+    max_participants:int
 
 
 class EventResponse(BaseModel):
@@ -67,6 +70,7 @@ class EventResponse(BaseModel):
     icon_url: Optional[str]
     lan: str
     long: str
+    max_participants:int
     participants: list
 
 

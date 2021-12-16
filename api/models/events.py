@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from sqlalchemy import Column, DateTime, Float, ForeignKey, String
+from sqlalchemy import Column, DateTime, Float, ForeignKey, String, Integer
 from sqlalchemy.orm import Mapped, relationship
 from typing import Any, TYPE_CHECKING
 from uuid import uuid4
@@ -32,6 +32,7 @@ class Event(Base):
     icon_url: Mapped[str] = Column(String(1024), nullable=True)
     lan: Mapped[float] = Column(Float(14))
     long: Mapped[float] = Column(Float(14))
+    max_participants: Mapped[int] = Column(Integer())
     participants: list[Participant] = relationship(
             "Participant",
             back_populates="event",
@@ -40,7 +41,7 @@ class Event(Base):
 
     @staticmethod
     async def create(name: str, description: str, owner_id: str, event_time: datetime, tags: str,
-                     lan: float, long: float, icon_url: str) -> Event:
+                     lan: float, long: float, icon_url: str, max_participants) -> Event:
         current_time = datetime.utcnow()
         event = Event(
                 id=str(uuid4()),
@@ -53,7 +54,8 @@ class Event(Base):
                 tags=tags,
                 lan=lan,
                 long=long,
-                icon_url=icon_url
+                icon_url=icon_url,
+                max_participants=max_participants
         )
 
         await db.add(event)
@@ -73,6 +75,7 @@ class Event(Base):
             "lan": self.lan,
             "long": self.long,
             "icon": self.icon_url,
+            "max_participants":self.max_participants
             # "participants": self.participants
         }
 
