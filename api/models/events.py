@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from sqlalchemy import Column, DateTime, Float, ForeignKey, String, Integer
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, relationship
 from typing import Any, TYPE_CHECKING
 from uuid import uuid4
@@ -11,7 +11,7 @@ from ..database import Base, db
 from ..logger import get_logger
 
 if TYPE_CHECKING:
-    from .event_participants import Participant
+    from .event_participants import Participant, get_participants
     from .user import User
 
 logger = get_logger(__name__)
@@ -37,6 +37,10 @@ class Event(Base):
             "Participant",
             back_populates="event",
             cascade="all, delete,delete-orphan",
+    )
+    chat: list[Event] = relationship(
+            "Chat",
+            back_populates="event",
     )
 
     @staticmethod
@@ -75,7 +79,7 @@ class Event(Base):
             "lan": self.lan,
             "long": self.long,
             "icon": self.icon_url,
-            "max_participants":self.max_participants
+            "max_participants": self.max_participants
             # "participants": self.participants
         }
 
@@ -85,8 +89,20 @@ class Event(Base):
         return event
 
     @staticmethod
+    async def get_from_chat_id(id: str) -> dict[str, Any]:
+        event = await db.get(Event, chat_id=id)
+        return event
+
+    @staticmethod
     async def get_list_ids(ids: list) -> dict[str, Any]:
         events = []
         for id in ids:
             events.append(await db.get(Event, id=id))
         return events
+
+    async def user_in_event(self, user_id: str) -> Participant:
+        event_participants = get_participants(self.id)
+        for participant in event_participants:
+            if participant.user_id == user_id and participant.accepted:
+                return participant
+        return None
