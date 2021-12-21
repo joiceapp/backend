@@ -91,7 +91,6 @@ class Event(Base):
     @staticmethod
     async def get_from_chat_id(id: str) -> dict[str, Any]:
         event = await db.get(Event, chat_id=id)
-        print(event.serialize)
         return event
 
     @staticmethod
@@ -105,6 +104,5 @@ class Event(Base):
         event_participants = await models.Participant.get_participants(self.id)
         for participant in event_participants:
             if participant.user_id == user_id and participant.accepted:
-                print(participant.serialize)
                 return participant
         return None

@@ -55,5 +55,9 @@ class Chat(Base):
         }
 
     @staticmethod
-    async def get_messages_from_time(time_start:datetime,time_end:datetime):
-        db.get(Chat,)
+    async def get_form_ids(ids) -> list:
+        msgs = []
+        for id in ids:
+            db_msg = await db.get(models.Chat, msg_id=id)
+            msgs.append(db_msg)
+        return msgs
