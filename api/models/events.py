@@ -11,7 +11,7 @@ from ..database import Base, db
 from ..logger import get_logger
 
 if TYPE_CHECKING:
-    from .event_participants import Participant, get_participants
+    from .event_participants import Participant
     from .user import User
 
 logger = get_logger(__name__)
@@ -91,6 +91,7 @@ class Event(Base):
     @staticmethod
     async def get_from_chat_id(id: str) -> dict[str, Any]:
         event = await db.get(Event, chat_id=id)
+        print(event.serialize)
         return event
 
     @staticmethod
@@ -101,8 +102,9 @@ class Event(Base):
         return events
 
     async def user_in_event(self, user_id: str) -> Participant:
-        event_participants = get_participants(self.id)
+        event_participants = await models.Participant.get_participants(self.id)
         for participant in event_participants:
             if participant.user_id == user_id and participant.accepted:
+                print(participant.serialize)
                 return participant
         return None
