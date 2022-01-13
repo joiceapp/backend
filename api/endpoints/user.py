@@ -75,7 +75,7 @@ async def get_user_by_id(user: models.User = get_user(require_self_or_admin=True
 
 
 @router.post(
-    "/users",
+    "/register",
     responses=user_responses(
         LoginResponse,
         UserAlreadyExistsError,

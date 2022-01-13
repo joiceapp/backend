@@ -36,9 +36,9 @@ RECAPTCHA_SITEKEY: Optional[str] = getenv("RECAPTCHA_SITEKEY", None)
 RECAPTCHA_SECRET: Optional[str] = getenv("RECAPTCHA_SECRET", None)
 
 ADMIN_USERNAME = getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = getenv("ADMIN_PASSWORD", "admin")
+ADMIN_PASSWORD = getenv("ADMIN_PASSWORD", "Yq@AWI8C0lu8F@p@sJUygL#^p27TXPi")
 
-OPEN_REGISTRATION: bool = get_bool("OPEN_REGISTRATION", False)
+OPEN_REGISTRATION: bool = True#get_bool("OPEN_REGISTRATION", True)
 OPEN_OAUTH_REGISTRATION: bool = get_bool("OPEN_OAUTH_REGISTRATION", False)
 
 # database configuration
