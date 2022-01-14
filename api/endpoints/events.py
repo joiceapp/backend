@@ -70,11 +70,11 @@ async def delete_event(event_id: str, user: models.User = get_user(require_self_
     return True
 
 
-@router.post("/filter/",
+@router.post("/filter/distance/",
              responses=user_responses(
                      list,
              ))
-async def filter_events(event_filter: FilterEvent, ):  # user: models.User = get_user(require_self_or_admin=True)):
+async def filter_distance(event_filter: FilterEvent, ):  # user: models.User = get_user(require_self_or_admin=True)):
     event_ids = await db.all(f"""
                             SELECT * ,  SQRT(POW(69.1 * (events.lan - {event_filter.lan}), 2) +
                             POW(69.1 * ({event_filter.long} - events.long) * COS(events.lan / 57.3), 2)) AS distance    
@@ -96,6 +96,26 @@ async def filter_events(event_filter: FilterEvent, ):  # user: models.User = get
 
     print(events_serialized)
     return events_serialized
+
+
+@router.get("/filter/user/{user_id}",
+             responses=user_responses(
+                     list,
+             ))
+async def filter_user(user_id:str, ):  # user: models.User = get_user(require_self_or_admin=True)):
+    events= [event.serialize async for event in await db.stream(filter_by(models.Event, owner=user_id))]
+    return events
+
+@router.get("/filter/next/{num}",
+             responses=user_responses(
+                     list,
+             ))
+async def filter_event_time(counts:int ):  # user: models.User = get_user(require_self_or_admin=True)):
+    #print(await db.all(f"""SELECT id FROM events HAVING event_time >= '{datetime.utcnow()}' ORDER BY event_time"""))
+    events= await Event.get_list_ids([event async for event in await db.stream(f"""SELECT * FROM events HAVING event_time >= '{datetime.utcnow()}' ORDER BY event_time""")])
+
+    return [event.serialize for event in events]
+
 
 @router.post("/request/request/{event_id}/",
              responses=user_responses(
