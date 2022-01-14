@@ -34,13 +34,13 @@ class Event(Base):
     long: Mapped[float] = Column(Float(14))
     max_participants: Mapped[int] = Column(Integer())
     participants: list[Participant] = relationship(
-            "Participant",
-            back_populates="event",
-            cascade="all, delete,delete-orphan",
+        "Participant",
+        back_populates="event",
+        cascade="all, delete,delete-orphan",
     )
     chat: list[Event] = relationship(
-            "Chat",
-            back_populates="event",
+        "Chat",
+        back_populates="event",
     )
 
     @staticmethod
@@ -49,18 +49,18 @@ class Event(Base):
         current_time = datetime.utcnow()
         print(current_time)
         event = Event(
-                id=str(uuid4()),
-                chat_id=str(uuid4()),
-                name=name,
-                description=description,
-                owner=owner_id,
-                event_created=current_time,
-                event_time=event_time,
-                tags=tags,
-                lan=lan,
-                long=long,
-                icon_url=icon_url,
-                max_participants=max_participants
+            id=str(uuid4()),
+            chat_id=str(uuid4()),
+            name=name,
+            description=description,
+            owner=owner_id,
+            event_created=current_time,
+            event_time=event_time,
+            tags=tags,
+            lan=lan,
+            long=long,
+            icon_url=icon_url,
+            max_participants=max_participants
         )
 
         await db.add(event)
@@ -81,7 +81,7 @@ class Event(Base):
             "long": self.long,
             "icon": self.icon_url,
             "max_participants": self.max_participants,
-            #"participants":   self.participants
+            #"current_participants": len( models.Participant.get_participants(self.id))
         }
 
     @staticmethod

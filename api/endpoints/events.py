@@ -94,6 +94,10 @@ async def filter_distance(event_filter: FilterEvent, ):  # user: models.User = g
         events_serialized.append(event_serialized)
 
     print(events_serialized)
+    for event in events_serialized:
+
+        event["current participants"] = len(await models.Participant.get_participants(event["id"]))
+
     return events_serialized
 
 
@@ -103,8 +107,12 @@ async def filter_distance(event_filter: FilterEvent, ):  # user: models.User = g
 async def get_event_by_name(name: str):
     events = await Event.get_list_ids([event async for event in await db.stream(
         f"""SELECT * FROM events WHERE name LIKE '%{name}%' ORDER BY event_time LIMIT 10""")])
+    event_serialized = [event.serialize for event in events]
+    for event in event_serialized:
 
-    return [event.serialize for event in events]
+        event["current participants"] = len(await models.Participant.get_participants(event["id"]))
+
+    return event_serialized
 
 
 @router.get("/event/{event_id}", responses=user_responses(
@@ -130,6 +138,11 @@ async def get_event(event_id: str):
 async def filter_user(user: models.User = get_user(require_self_or_admin=True)):
     # user: models.User = get_user(require_self_or_admin=True)):
     events = [event.serialize async for event in await db.stream(filter_by(models.Event, owner=user.id))]
+    for event in events:
+        event_participants = await  models.Participant.get_participants(event["id"])
+        event["current participants"] = len(event_participants)
+        event["participants"] = [participant.serialize for participant in event_participants]
+
     return events
 
 
@@ -140,10 +153,15 @@ async def filter_user(user: models.User = get_user(require_self_or_admin=True)):
 async def filter_user_joined_events(user: models.User = get_user(require_self_or_admin=True)):
     # user: models.User = get_user(require_self_or_admin=True)):
     events = [
-        event for event in
+        event.serialize for event in
         await models.Event.get_list_ids(
             await models.Participant.get_events_where_participant(user.id)
         )]
+    for event in events:
+        event_participants = await models.Participant.get_participants(event["id"])
+        event["current participants"] = len(event_participants)
+        event["participants"] = [participant.serialize for participant in event_participants]
+
     return events
 
 
@@ -157,8 +175,12 @@ async def filter_event_time(counts: int):  # user: models.User = get_user(requir
 
     events = await Event.get_list_ids([event async for event in await db.stream(
         f"""SELECT * FROM events HAVING event_time >= '{datetime.utcnow()}' ORDER BY event_time LIMIT {counts}""")])
+    events_serialized=[event.serialize for event in events]
+    for event in events_serialized:
+        event_participants = await models.Participant.get_participants(event["id"])
+        event["current participants"] = len(event_participants)
 
-    return [event.serialize for event in events]
+    return events_serialized
 
 
 @router.post("/request/request/{event_id}/",
