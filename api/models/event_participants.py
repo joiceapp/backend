@@ -37,11 +37,11 @@ class Participant(Base):
             accepted = True
 
         event = Participant(
-                event_id=event_id,
-                user_id=user_id,
-                requested_at=datetime.utcnow(),
-                joined_at=joined_at,
-                accepted=accepted
+            event_id=event_id,
+            user_id=user_id,
+            requested_at=datetime.utcnow(),
+            joined_at=joined_at,
+            accepted=accepted
         )
         await db.add(event)
         return event
@@ -60,3 +60,7 @@ class Participant(Base):
     async def get_participants(event_id: str) -> list:
         participants = await db.all(select(Participant).where(Participant.event_id == event_id))
         return participants
+
+    @staticmethod
+    async def get_events_where_participant(user_id: str) -> list:
+        return await db.all(select(Participant.event_id).where(Participant.user_id == user_id))

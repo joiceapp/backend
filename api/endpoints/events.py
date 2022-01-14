@@ -123,7 +123,7 @@ async def get_event(event_id: str):
     return event_serialize
 
 
-@router.get("/filter/user/",
+@router.get("/filter/my_events/",
             responses=user_responses(
                 list,
             ))
@@ -133,16 +133,30 @@ async def filter_user(user: models.User = get_user(require_self_or_admin=True)):
     return events
 
 
+@router.get("/filter/joined_events/",
+            responses=user_responses(
+                list,
+            ))
+async def filter_user_joined_events(user: models.User = get_user(require_self_or_admin=True)):
+    # user: models.User = get_user(require_self_or_admin=True)):
+    events = [
+        event for event in
+        await models.Event.get_list_ids(
+            await models.Participant.get_events_where_participant(user.id)
+        )]
+    return events
+
+
 @router.get("/filter/next/{num}",
             responses=user_responses(
                 list,
             ))
 async def filter_event_time(counts: int):  # user: models.User = get_user(require_self_or_admin=True)):
     # print(await db.all(f"""SELECT id FROM events HAVING event_time >= '{datetime.utcnow()}' ORDER BY event_time"""))
-    counts= counts if counts <=10 else 10
+    counts = counts if counts <= 10 else 10
 
     events = await Event.get_list_ids([event async for event in await db.stream(
-        f"""SELECT * FROM events HAVING event_time >= '{datetime.utcnow()}' ORDER BY event_time LIMIT {counts}""" )])
+        f"""SELECT * FROM events HAVING event_time >= '{datetime.utcnow()}' ORDER BY event_time LIMIT {counts}""")])
 
     return [event.serialize for event in events]
 
