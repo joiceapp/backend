@@ -74,7 +74,7 @@ async def delete_event(event_id: str, user: models.User = get_user(require_self_
              responses=user_responses(
                  list,
              ))
-async def filter_distance(event_filter: FilterEvent, ):  # user: models.User = get_user(require_self_or_admin=True)):
+async def filter_distance(event_filter: FilterEvent, user: models.User = get_user(require_self_or_admin=True)):  # user: models.User = get_user(require_self_or_admin=True)):
     event_ids = await db.all(f"""
                             SELECT * ,  SQRT(POW(69.1 * (events.lan - {event_filter.lan}), 2) +
                             POW(69.1 * ({event_filter.long} - events.long) * COS(events.lan / 57.3), 2)) AS distance    
@@ -104,7 +104,7 @@ async def filter_distance(event_filter: FilterEvent, ):  # user: models.User = g
 @router.get("/filter/{name}", responses=user_responses(
     list
 ))
-async def get_event_by_name(name: str):
+async def get_event_by_name(name: str,user: models.User = get_user(require_self_or_admin=True)):
     events = await Event.get_list_ids([event async for event in await db.stream(
         f"""SELECT * FROM events WHERE name LIKE '%{name}%' ORDER BY event_time LIMIT 10""")])
     event_serialized = [event.serialize for event in events]
@@ -119,7 +119,7 @@ async def get_event_by_name(name: str):
     EventResponse,
     EventNotFound
 ))
-async def get_event(event_id: str):
+async def get_event(event_id: str,user: models.User = get_user(require_self_or_admin=True)):
     event = await models.Event.get_from_id(event_id)
     if event is None:
         return EventNotFound
@@ -169,7 +169,7 @@ async def filter_user_joined_events(user: models.User = get_user(require_self_or
             responses=user_responses(
                 list,
             ))
-async def filter_event_time(counts: int):  # user: models.User = get_user(require_self_or_admin=True)):
+async def filter_event_time(counts: int,user: models.User = get_user(require_self_or_admin=True)):  # user: models.User = get_user(require_self_or_admin=True)):
     # print(await db.all(f"""SELECT id FROM events HAVING event_time >= '{datetime.utcnow()}' ORDER BY event_time"""))
     counts = counts if counts <= 10 else 10
 
