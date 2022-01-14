@@ -165,7 +165,7 @@ async def filter_user_joined_events(user: models.User = get_user(require_self_or
     return events
 
 
-@router.get("/filter/next/{num}",
+@router.get("/filter/next/{counts}",
             responses=user_responses(
                 list,
             ))
