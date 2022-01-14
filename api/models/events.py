@@ -47,6 +47,7 @@ class Event(Base):
     async def create(name: str, description: str, owner_id: str, event_time: datetime, tags: str,
                      lan: float, long: float, icon_url: str, max_participants) -> Event:
         current_time = datetime.utcnow()
+        print(current_time)
         event = Event(
                 id=str(uuid4()),
                 chat_id=str(uuid4()),
@@ -79,8 +80,8 @@ class Event(Base):
             "lan": self.lan,
             "long": self.long,
             "icon": self.icon_url,
-            "max_participants": self.max_participants
-            # "participants": self.participants
+            "max_participants": self.max_participants,
+            #"participants":   self.participants
         }
 
     @staticmethod

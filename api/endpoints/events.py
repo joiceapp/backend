@@ -1,6 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter
-from math import pow, sqrt,cos
+from math import pow, sqrt, cos
 from typing import Any
 
 from .. import models
@@ -27,12 +27,12 @@ Fehlt: events suchens
 
 
 @router.post(
-        "/create",
+    "/create",
 
-        responses=user_responses(
-                EventResponse,
+    responses=user_responses(
+        EventResponse,
 
-        ),
+    ),
 )
 async def create_event(event: CreateEvent, user: models.User = get_user(require_self_or_admin=True)) -> Any:
     event = await models.Event.create(name=event.name,
@@ -51,13 +51,13 @@ async def create_event(event: CreateEvent, user: models.User = get_user(require_
 
 
 @router.delete(
-        "/delete/{event_id}/",
+    "/delete/{event_id}/",
 
-        responses=user_responses(
-                bool,
-                PermissionDeniedError,
-                EventNotFound
-        ),
+    responses=user_responses(
+        bool,
+        PermissionDeniedError,
+        EventNotFound
+    ),
 )
 async def delete_event(event_id: str, user: models.User = get_user(require_self_or_admin=True)) -> Any:
     event = await Event.get_from_id(event_id)
@@ -72,7 +72,7 @@ async def delete_event(event_id: str, user: models.User = get_user(require_self_
 
 @router.post("/filter/distance/",
              responses=user_responses(
-                     list,
+                 list,
              ))
 async def filter_distance(event_filter: FilterEvent, ):  # user: models.User = get_user(require_self_or_admin=True)):
     event_ids = await db.all(f"""
@@ -86,43 +86,73 @@ async def filter_distance(event_filter: FilterEvent, ):  # user: models.User = g
         event_serialized = event.serialize
         print(event_serialized["lan"])
         event_serialized["destination"] = sqrt(
-                pow(69.1 * (float(event_serialized["lan"]) - event_filter.lan), 2) +
-                pow(69.1 * (event_filter.long - float(event_serialized["long"])) * cos(
-                        float(event_serialized["lan"]) / 57.3), 2))
-        event_serialized["lan"]=0
-        event_serialized["long"]=0
+            pow(69.1 * (float(event_serialized["lan"]) - event_filter.lan), 2) +
+            pow(69.1 * (event_filter.long - float(event_serialized["long"])) * cos(
+                float(event_serialized["lan"]) / 57.3), 2))
+        event_serialized["lan"] = 0
+        event_serialized["long"] = 0
         events_serialized.append(event_serialized)
-
 
     print(events_serialized)
     return events_serialized
 
 
-@router.get("/filter/user/{user_id}",
-             responses=user_responses(
-                     list,
-             ))
-async def filter_user(user_id:str, ):  # user: models.User = get_user(require_self_or_admin=True)):
-    events= [event.serialize async for event in await db.stream(filter_by(models.Event, owner=user_id))]
+@router.get("/filter/{name}", responses=user_responses(
+    list
+))
+async def get_event_by_name(name: str):
+    events = await Event.get_list_ids([event async for event in await db.stream(
+        f"""SELECT * FROM events WHERE name LIKE '%{name}%' ORDER BY event_time LIMIT 10""")])
+
+    return [event.serialize for event in events]
+
+
+@router.get("/event/{event_id}", responses=user_responses(
+    EventResponse,
+    EventNotFound
+))
+async def get_event(event_id: str):
+    event = await models.Event.get_from_id(event_id)
+    if event is None:
+        return EventNotFound
+    event_serialize = event.serialize
+    event_participants = await  models.Participant.get_participants(event_id)
+    event_serialize["current participants"] = len(event_participants)
+    event_serialize["participants"] = [participant.serialize for participant in event_participants]
+
+    return event_serialize
+
+
+@router.get("/filter/user/",
+            responses=user_responses(
+                list,
+            ))
+async def filter_user(user: models.User = get_user(require_self_or_admin=True)):
+    # user: models.User = get_user(require_self_or_admin=True)):
+    events = [event.serialize async for event in await db.stream(filter_by(models.Event, owner=user.id))]
     return events
 
+
 @router.get("/filter/next/{num}",
-             responses=user_responses(
-                     list,
-             ))
-async def filter_event_time(counts:int ):  # user: models.User = get_user(require_self_or_admin=True)):
-    #print(await db.all(f"""SELECT id FROM events HAVING event_time >= '{datetime.utcnow()}' ORDER BY event_time"""))
-    events= await Event.get_list_ids([event async for event in await db.stream(f"""SELECT * FROM events HAVING event_time >= '{datetime.utcnow()}' ORDER BY event_time""")])
+            responses=user_responses(
+                list,
+            ))
+async def filter_event_time(counts: int):  # user: models.User = get_user(require_self_or_admin=True)):
+    # print(await db.all(f"""SELECT id FROM events HAVING event_time >= '{datetime.utcnow()}' ORDER BY event_time"""))
+    counts= counts if counts <=10 else 10
+
+    events = await Event.get_list_ids([event async for event in await db.stream(
+        f"""SELECT * FROM events HAVING event_time >= '{datetime.utcnow()}' ORDER BY event_time LIMIT {counts}""" )])
 
     return [event.serialize for event in events]
 
 
 @router.post("/request/request/{event_id}/",
              responses=user_responses(
-                     bool,
-                     PermissionDeniedError,
-                     EventNotFound,
-                     AlreadyParticipantException
+                 bool,
+                 PermissionDeniedError,
+                 EventNotFound,
+                 AlreadyParticipantException
              ))
 async def request(event_id: str, user: models.User = get_user(require_self_or_admin=True)) -> Any:
     event = await Event.get_from_id(event_id)
@@ -138,10 +168,10 @@ async def request(event_id: str, user: models.User = get_user(require_self_or_ad
 
 @router.post("/request/accept/",
              responses=user_responses(
-                     bool,
-                     PermissionDeniedError,
-                     EventNotFound,
-                     UserNotFoundError
+                 bool,
+                 PermissionDeniedError,
+                 EventNotFound,
+                 UserNotFoundError
              ))
 async def accept(event_user: EventUserAccept, user: models.User = get_user(require_self_or_admin=True)) -> Any:
     event = await Event.get_from_id(event_user.event_id)
@@ -167,10 +197,10 @@ async def accept(event_user: EventUserAccept, user: models.User = get_user(requi
 
 @router.get("/request/get/{event_id}",
             responses=user_responses(
-                    list,
-                    PermissionDeniedError,
-                    EventNotFound,
-                    UserNotFoundError
+                list,
+                PermissionDeniedError,
+                EventNotFound,
+                UserNotFoundError
             ))
 async def get(event_id: str, user: models.User = get_user(require_self_or_admin=True)) -> Any:
     event = await Event.get_from_id(event_id)

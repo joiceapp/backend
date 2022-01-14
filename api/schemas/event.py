@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-
+from datetime import datetime
 from ..utils import example, get_example
 
 USERNAME_REGEX = r"^[a-zA-Z0-9]{4,32}$"
@@ -50,7 +50,7 @@ class Event(BaseModel):
 class CreateEvent(BaseModel):
     name: str
     description: str
-    event_time: float
+    event_time: datetime
     tags: Optional[str]
     icon_url: Optional[str]
     lan: float

@@ -34,12 +34,12 @@ router = APIRouter(tags=["users"])
 
 @router.get("/users", dependencies=[admin_auth], responses=admin_responses(UsersResponse))
 async def get_users(
-    limit: int = Query(100, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    name: Optional[str] = Query(None, max_length=256),
-    enabled: Optional[bool] = Query(None),
-    admin: Optional[bool] = Query(None),
-    mfa_enabled: Optional[bool] = Query(None),
+        limit: int = Query(100, ge=1, le=100),
+        offset: int = Query(0, ge=0),
+        name: Optional[str] = Query(None, max_length=256),
+        enabled: Optional[bool] = Query(None),
+        admin: Optional[bool] = Query(None),
+        mfa_enabled: Optional[bool] = Query(None),
 ) -> Any:
     """Get all users"""
 
@@ -117,7 +117,7 @@ async def create_user(data: CreateUser, request: Request, admin: bool = is_admin
         await redis.delete(key1, key2, key3)
 
         if await db.exists(
-            filter_by(models.OAuthUserConnection, provider_id=provider_id, remote_user_id=remote_user_id),
+                filter_by(models.OAuthUserConnection, provider_id=provider_id, remote_user_id=remote_user_id),
         ):
             raise RemoteAlreadyLinkedError
 
@@ -140,10 +140,10 @@ async def create_user(data: CreateUser, request: Request, admin: bool = is_admin
     responses=admin_responses(User, UserNotFoundError, UserAlreadyExistsError, CannotDeleteLastLoginMethodError),
 )
 async def update_user(
-    data: UpdateUser,
-    user: models.User = get_user(models.User.sessions, models.User.oauth_connections, require_self_or_admin=True),
-    admin: bool = is_admin,
-    session: models.Session = user_auth,
+        data: UpdateUser,
+        user: models.User = get_user(models.User.sessions, models.User.oauth_connections, require_self_or_admin=True),
+        admin: bool = is_admin,
+        session: models.Session = user_auth,
 ) -> Any:
     """Update a user"""
 
@@ -194,8 +194,8 @@ async def initialize_mfa(user: models.User = get_user(require_self_or_admin=True
     responses=admin_responses(str, UserNotFoundError, MFAAlreadyEnabledError, MFANotInitializedError, InvalidCodeError),
 )
 async def enable_mfa(
-    code: str = Body(..., embed=True, regex=MFA_CODE_REGEX),
-    user: models.User = get_user(require_self_or_admin=True),
+        code: str = Body(..., embed=True, regex=MFA_CODE_REGEX),
+        user: models.User = get_user(require_self_or_admin=True),
 ) -> Any:
     """Enable mfa and generate recovery code"""
 
@@ -228,8 +228,8 @@ async def disable_mfa(user: models.User = get_user(require_self_or_admin=True)) 
 
 @router.delete("/users/{user_id}", responses=admin_responses(bool, UserNotFoundError))
 async def delete_user(
-    user: models.User = get_user(models.User.sessions, require_self_or_admin=True),
-    admin: bool = is_admin,
+        user: models.User = get_user(models.User.sessions, require_self_or_admin=True),
+        admin: bool = is_admin,
 ) -> Any:
     """Delete a user"""
 
@@ -242,3 +242,14 @@ async def delete_user(
     await user.logout()
     await db.delete(user)
     return True
+
+
+@router.get(
+    "/users_name/{user_id}/",
+    responses=user_responses(str, UserNotFoundError, ),
+)
+async def get_user_by_id(user_id: str) -> Any:
+    user = await db.get(models.User, id=user_id)
+    if not user:
+        return UserNotFoundError
+    return {"username": user.name, "uuid": user_id}
