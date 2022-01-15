@@ -32,6 +32,7 @@ class Event(Base):
     icon_url: Mapped[str] = Column(String(1024), nullable=True)
     lan: Mapped[float] = Column(Float(14))
     long: Mapped[float] = Column(Float(14))
+    city:Mapped[str]=Column(String(20),nullable=False)
     max_participants: Mapped[int] = Column(Integer())
     participants: list[Participant] = relationship(
         "Participant",
@@ -45,7 +46,7 @@ class Event(Base):
 
     @staticmethod
     async def create(name: str, description: str, owner_id: str, event_time: datetime, tags: str,
-                     lan: float, long: float, icon_url: str, max_participants) -> Event:
+                     lan: float, long: float, icon_url: str,city:str, max_participants:int) -> Event:
         current_time = datetime.utcnow()
         print(current_time)
         event = Event(
@@ -60,6 +61,7 @@ class Event(Base):
             lan=lan,
             long=long,
             icon_url=icon_url,
+            city=city,
             max_participants=max_participants
         )
 
@@ -79,6 +81,7 @@ class Event(Base):
             "tags": self.tags,
             "lan": self.lan,
             "long": self.long,
+            "city":self.city,
             "icon": self.icon_url,
             "max_participants": self.max_participants,
             #"current_participants": len( models.Participant.get_participants(self.id))

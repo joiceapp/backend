@@ -29,12 +29,13 @@ class Event(BaseModel):
             name="event69",
             description="this is a description",
             owner="8d79558e-fd96-4f74-858e-24d579cfa529",
-            event_created=1615725447.182818,
-            event_time=1615735459.274742,
+            event_created="2022-01-15T10:45:28",
+            event_time="2022-01-15T10:45:28",
             tags="tag1 tag2 vegan vegetarian",
-            icon_url="http://127.0.0.1/img.png",
+            icon="http://127.0.0.1/img.png",
             lan=51.503280237787784,
             long=51.503280237787789,
+            city="komische stadt",
             max_participants=3,
             participants=[
                 """ {user_id: "8826d3c7-5456-43c2-a132-b94a9d3e4121",
@@ -56,6 +57,7 @@ class CreateEvent(BaseModel):
     lan: float
     long: float
     max_participants:int
+    city:str
 
 
 class EventResponse(BaseModel):
@@ -71,7 +73,8 @@ class EventResponse(BaseModel):
     lan: str
     long: str
     max_participants:int
-    participants: list
+    current_participant:int
+    participants: Optional[list]
 
 
 class EventUserAccept(BaseModel):
