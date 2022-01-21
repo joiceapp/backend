@@ -110,6 +110,8 @@ async def get_event_by_name(name: str, user: models.User = get_user(require_self
             f"""SELECT * FROM events WHERE name LIKE '%{name}%' ORDER BY event_time LIMIT 10""")])
     event_serialized = [event.serialize for event in events]
     for event in event_serialized:
+        event["lat"] = 0
+        event["long"] = 0
         event["current_participants"] = len(await models.Participant.get_participants(event["id"]))
 
     return event_serialized
@@ -125,6 +127,8 @@ async def get_event_by_city(city: str, user: models.User = get_user(require_self
     event_serialized = [event.serialize for event in events]
 
     for event in event_serialized:
+        event["lat"] = 0
+        event["long"] = 0
         event["current_participants"] = len(await models.Participant.get_participants(event["id"]))
 
     return event_serialized
@@ -140,6 +144,9 @@ async def get_event(event_id: str, user: models.User = get_user(require_self_or_
         return EventNotFound
     event_serialize = event.serialize
     event_participants = await  models.Participant.get_participants(event_id)
+    if event.owner != user.id:
+        event["lat"] = 0
+        event["long"] = 0
     event_serialize["current_participants"] = len(event_participants)
     event_serialize["participants"] = [participant.serialize for participant in event_participants]
 
@@ -176,7 +183,8 @@ async def filter_user_joined_events(user: models.User = get_user(require_self_or
         event_participants = await models.Participant.get_participants(event["id"])
         event["current_participants"] = len(event_participants)
         event["participants"] = [participant.serialize for participant in event_participants]
-
+        event["lat"] = 0
+        event["long"] = 0
     return events
 
 
@@ -195,6 +203,9 @@ async def filter_event_time(counts: int, user: models.User = get_user(
     for event in events_serialized:
         event_participants = await models.Participant.get_participants(event["id"])
         event["current_participants"] = len(event_participants)
+
+        event["lat"]=0
+        event["long"]=0
 
     return events_serialized
 
